@@ -1,0 +1,11 @@
+body {
+    margin: 0;
+    background-color: rgb(28, 28, 28);
+}
+
+#canvas {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 50px
+}

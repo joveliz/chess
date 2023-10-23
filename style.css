@@ -12,6 +12,7 @@ body {
 
 .div--textbox {
     background-color: rgb(25, 25, 25);
+    overflow: auto;
 }
 
 .div--title {

@@ -35,8 +35,8 @@ const COLOR_PALETTE = {
 }
 
 const MOVES = {
-    bp: [{x: 0, y: 1, type: 'm'},{x: -1, y: 1, type: 'a'},{x: 1, y: 1, type: 'a'}],
-    wp: [{x: 0, y: -1, type: 'm'},{x: -1, y: -1, type: 'a'},{x: 1, y: -1, type: 'a'}],
+    bp: [{x: 0, y: 1, type: 'm'},{x: -1, y: 1, type: 'a'},{x: 1, y: 1, type: 'a'},{x: -1, y: 1, type: 'e'},{x: 1, y: 1, type: 'e'}],
+    wp: [{x: 0, y: -1, type: 'm'},{x: -1, y: -1, type: 'a'},{x: 1, y: -1, type: 'a'},{x: -1, y: -1, type: 'e'},{x: 1, y: -1, type: 'e'}],
     r: [{x: 0, y: -1, type: 'n'},{x: 0, y: 1, type: 'n'}, {x: 1, y: 0, type: 'n'}, {x: -1, y: 0, type: 'n'}],
     b: [{x: -1, y: -1, type: 'n'},{x: -1, y: 1, type: 'n'}, {x: 1, y: 1, type: 'n'}, {x: 1, y: -1, type: 'n'}],
     n: [{x: -1, y: -2, type: 'c'},{x: -1, y: 2, type: 'c'}, {x: -2, y: -1, type: 'c'}, {x: -2, y: 1, type: 'c'},
@@ -142,9 +142,10 @@ function getBoard(board, move) {
     for (let y =0; y<8; y++) {
         let new_row = [];
         for(let x =0; x<8; x++) {
-            if (board[y][x]) {
-                const new_piece = new ChessPiece(board[y][x].color, board[y][x].type, x, y)
-                new_piece.setPreviousPos(board[y][x].x, board[y][x].y)
+            const piece = board[y][x] 
+            if (piece) {
+                const new_piece = new ChessPiece(piece.color, piece.type, x, y)
+                new_piece.setMoveCounter(piece.move_counter.n, piece.move_counter.turn)
                 new_row.push(new_piece);
             } else {
                 new_row.push(false);
@@ -159,8 +160,8 @@ function getBoard(board, move) {
     const y1 = move[1].y
 
     const current_piece = new_board[y0][x0]
-    current_piece.setPreviousPos(x0, y0)
     current_piece.setCurrentPos(x1, y1)
+    current_piece.setMoveCounter(current_piece.move_counter.n + 1, TURN_NUMBER)
 
     new_board[y0][x0] = false
     new_board[y1][x1] = current_piece
@@ -244,7 +245,7 @@ function isCastlingAvailable(board, king, direction) {
             const rook = board[king.y][king.x + (3 * dir)]
             if ((rook)
                 && (rook.type == 'r')
-                && (rook.getPreviousPos() == null)) {
+                && (rook.move_counter.n == 0)) {
                     return true
             }
         }
@@ -253,7 +254,7 @@ function isCastlingAvailable(board, king, direction) {
                 const rook = board[king.y][king.x + (4 * dir)]
                 if ((rook)
                     && (rook.type == 'r')
-                    && (rook.getPreviousPos() == null)) {
+                    && (rook.move_counter.n == 0)) {
                         return true
                 }
             }
@@ -269,21 +270,17 @@ class ChessPiece {
         this.type = type
         this.x = x
         this.y = y
-        this.previous_pos = null
+        this.move_counter = {n: 0, turn: false}
         this.available_moves = []
-    }
-
-    getPreviousPos() {
-        return this.previous_pos
-    }
-
-    setPreviousPos(x, y) {
-        this.previous_pos = {x: x, y: y}
     }
 
     setCurrentPos(x, y) {
         this.x = x
         this.y = y
+    }
+
+    setMoveCounter(n, turn) {
+        this.move_counter = {n: n, turn: turn}
     }
 
     isAvailableMove(x, y) {
@@ -327,7 +324,7 @@ class ChessPiece {
                     case 'm':
                         if (!board[new_move.y][new_move.x]) {
                             available_moves.push(new_move)
-                            if (this.previous_pos === null) {
+                            if (this.move_counter.n == 0) {
                                 new_move = {
                                     x: new_move.x,
                                     y: new_move.y + move.y,
@@ -367,8 +364,20 @@ class ChessPiece {
                         }
                         break
                     case 't':
-                        if ((this.getPreviousPos() == null) && (isCastlingAvailable(board, this, move.x))) {
+                        if ((this.move_counter.n == 0) && (isCastlingAvailable(board, this, move.x))) {
                             available_moves.push(new_move)
+                        }
+                        break
+                    case 'e':
+                        let row_number = 3
+                        if (this.color === 'b') {
+                            row_number = 4
+                        }
+                        if (this.y === row_number) {
+                            const next_sq = board[row_number][new_move.x]
+                            if (next_sq && (next_sq.type == 'p') && (next_sq.move_counter.n == 1) && (next_sq.move_counter.turn == TURN_NUMBER - (this.color === 'w'? 1 : 0))) {
+                                available_moves.push(new_move)
+                            }
                         }
                         break
                     default:
@@ -464,7 +473,7 @@ class ChessGame {
         const captured_piece = this.getPieceAt(x, y)
 
         piece.setCurrentPos(x, y)
-        piece.setPreviousPos(prev_pos.x, prev_pos.y)
+        piece.setMoveCounter(piece.move_counter.n + 1, TURN_NUMBER)
         this.setPieceAt(x, y, piece)
         this.setPieceAt(prev_pos.x, prev_pos.y, false)
         this.setLastMove([prev_pos, {x: piece.x, y: piece.y}])
@@ -480,7 +489,7 @@ class ChessGame {
         const piece = this.current_piece
         let text = ''
         if(!castling) {
-            text = `${piece.type === 'p' ? captured ? SQ_LETTERS[piece.previous_pos.x] : '' : piece.type.toUpperCase()}${captured ? 'x' : ''}${SQ_LETTERS[piece.x]}${SQ_NUMBERS[7-piece.y]}${check ? '+' : ''}`
+            text = `${piece.type === 'p' ? captured ? SQ_LETTERS[this.last_move[0].x] : '' : piece.type.toUpperCase()}${captured ? 'x' : ''}${SQ_LETTERS[piece.x]}${SQ_NUMBERS[7-piece.y]}${check ? '+' : ''}`
         } else {
             text = `${piece.x > 4 ? '0-0' : '0-0-0'}`
         }
@@ -620,6 +629,7 @@ function clickHandler(game, boardPosX, boardPosY) {
 
         if (available_move) {
             const is_castling_move = available_move.type === 't'
+            const is_en_passant_move = available_move.type === 'e'
             const is_currently_in_check = isCheck(game.board, CURRENT_PLAYER)
             const new_board = getBoard(game.board, [{ x: game.current_piece.x, y: game.current_piece.y}, available_move])
             const will_be_in_check = isCheck(new_board, CURRENT_PLAYER)
@@ -629,9 +639,20 @@ function clickHandler(game, boardPosX, boardPosY) {
             } else if (is_castling_move && is_currently_in_check) {
                 console.log('invalid move! (cannot castle while in check)')
             } else {
-                const captured_piece = game.makeMove(boardPosX, boardPosY, game.current_piece)     
+                let captured_piece = game.makeMove(boardPosX, boardPosY, game.current_piece)
+                
+                if (is_en_passant_move) {
+                    let y_dir = 1
+                    if (CURRENT_PLAYER == 'b') {
+                        y_dir = -1
+                    }
+                    captured_piece = game.getPieceAt(boardPosX, boardPosY + y_dir)
+                    game.setPieceAt(boardPosX, boardPosY + y_dir, false)
+                }
+
                 if (captured_piece) {
                     game.addCapturedPiece(captured_piece)
+                    console.log(captured_piece)
                 }
 
                 if (is_castling_move) {

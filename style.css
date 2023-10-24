@@ -10,15 +10,31 @@ body {
     margin: 50px;
 }
 
-.div--textbox {
+.div--menu {
+    display: grid;
+    grid-template-rows: 30px 1fr 30px;
+    grid-template-columns: 1fr;
     background-color: rgb(25, 25, 25);
     overflow: auto;
 }
 
-.div--title {
-    padding: 1px;
-    background-color: rgb(61, 61, 61);
-    color:rgb(219, 219, 219);
+.div--black {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(16, 16, 16);
+    color:rgb(237, 237, 237);
+    font-family: 'Lucida Sans';
+    font-size: 10px;
+    text-align: center;
+}
+
+.div--white {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(237, 237, 237);
+    color:rgb(16, 16, 16);
     font-family: 'Lucida Sans';
     font-size: 10px;
     text-align: center;

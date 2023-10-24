@@ -1,7 +1,7 @@
 const canvas = document.getElementById('canvas')
 const c = canvas.getContext('2d')
 
-const DIV_TEXTBOX = document.getElementById('div-textbox')
+const DIV_MENU = document.getElementById('div-menu')
 const DIV_HISTORY = document.getElementById('div-history')
 
 const WIDTH = 600
@@ -15,8 +15,8 @@ const EMPTY_BOARD = Array.from(Array(8), () => Array(8).fill(false))
 canvas.width = WIDTH
 canvas.height = HEIGHT
 
-DIV_TEXTBOX.style.width = `${WIDTH/2}px`
-DIV_TEXTBOX.style.height = `${HEIGHT}px`
+DIV_MENU.style.width = `${WIDTH/2}px`
+DIV_MENU.style.height = `${HEIGHT}px`
 
 var CURRENT_PLAYER = 'w'
 
@@ -143,7 +143,9 @@ function getBoard(board, move) {
         let new_row = [];
         for(let x =0; x<8; x++) {
             if (board[y][x]) {
-                new_row.push(new ChessPiece(board[y][x].color, board[y][x].type, x, y));
+                const new_piece = new ChessPiece(board[y][x].color, board[y][x].type, x, y)
+                new_piece.setPreviousPos(board[y][x].x, board[y][x].y)
+                new_row.push(new_piece);
             } else {
                 new_row.push(false);
             };
@@ -215,6 +217,23 @@ function isMate(board, color) {
         }
     }
     return true
+}
+
+function handleCheckAndMate(game, color) {
+    const is_in_check = isCheck(game.board, color)
+
+    if (is_in_check) {
+        const check_pos = game.last_move[1]
+        const check_king = game.kings[CURRENT_PLAYER]
+        game.highlightCheck(check_pos.x, check_pos.y)
+        game.highlightCheck(check_king.x, check_king.y)
+
+        const is_mate = isMate(game.board, color)
+        if (is_mate) {
+            gameOver()
+        }
+    }
+
 }
 
 function isCastlingAvailable(board, king, direction) {
@@ -308,7 +327,7 @@ class ChessPiece {
                     case 'm':
                         if (!board[new_move.y][new_move.x]) {
                             available_moves.push(new_move)
-                            if (this.previous_pos == null) {
+                            if (this.previous_pos === null) {
                                 new_move = {
                                     x: new_move.x,
                                     y: new_move.y + move.y,
@@ -380,6 +399,7 @@ class ChessGame {
         this.last_move = null
         this.kings = {b: null, w: null}
         this.captured_pieces = {b: [], w: []}
+        this.promotion_pieces = []
         this.init(board)
     }
 
@@ -402,8 +422,8 @@ class ChessGame {
         }
     }
 
-    drawSquare(x, y) {
-        c.fillStyle = this.color_palette.sq_color
+    drawSquare(x, y, color=this.color_palette.sq_color) {
+        c.fillStyle = color
         c.fillRect((x * SQ_WIDTH), (y * SQ_HEIGHT), SQ_WIDTH, SQ_HEIGHT)
     }
 
@@ -456,9 +476,14 @@ class ChessGame {
         this.captured_pieces[piece.color].push(piece)
     }
 
-    addToMoveHistory() {
+    addToMoveHistory(captured=false, check=false, castling=false) {
         const piece = this.current_piece
-        const text = `${piece.color}${piece.type} to ${SQ_LETTERS[piece.x]}${SQ_NUMBERS[7-piece.y]}`
+        let text = ''
+        if(!castling) {
+            text = `${piece.type === 'p' ? captured ? SQ_LETTERS[piece.previous_pos.x] : '' : piece.type.toUpperCase()}${captured ? 'x' : ''}${SQ_LETTERS[piece.x]}${SQ_NUMBERS[7-piece.y]}${check ? '+' : ''}`
+        } else {
+            text = `${piece.x > 4 ? '0-0' : '0-0-0'}`
+        }
         if (piece.color == 'w') {
             const p_element = document.createElement('p')
             const p_text = document.createTextNode(`${TURN_NUMBER}. ${text}`)
@@ -469,6 +494,47 @@ class ChessGame {
             TURN_NUMBER += 1
         }
     }
+
+    checkForPromotion() {
+        for (const piece of this.board[0]) {
+            if (piece && (piece.type === 'p')) {
+                return piece
+            }
+        }
+
+        for (const piece of this.board[7]) {
+            if (piece && (piece.type === 'p')) {
+                return piece
+            }
+        }
+        return false
+    }
+
+    promote(piece) {
+        let direction = -1
+        if (piece.y === 0) {
+            direction = 1
+        }
+
+        canvas.removeEventListener('click', eventListener)
+
+        const x = piece.x
+        const y = piece.y
+        const color = piece.color
+        const possible = ['q', 'r', 'b', 'n']
+
+        this.promotion_pieces = []
+
+        for (let i=0; i<possible.length; i++) {      
+            const new_option = new ChessPiece(color, possible[i], x, y + (i * direction))
+            this.promotion_pieces.push(new_option)
+            this.drawSquare(new_option.x, new_option.y, this.color_palette.sq_highlight)
+            new_option.draw()
+        }
+
+        canvas.addEventListener('click', promotionEventListener)
+    }
+
 
     nextPlayer() {
         CURRENT_PLAYER = nextColor(CURRENT_PLAYER)
@@ -501,21 +567,14 @@ class ChessGame {
         this.highlightSquare(x, y, this.color_palette.sq_highlight_check)
     }
 
-    castlingMove(x, y, direction) {
-        const kingPos = {x: x, y: y}
-        const dir = direction / 2
+    castlingMove(kingPrevPosX, kingPrevPosY) {
+        const dir = this.current_piece.x > 4 ? 1 : -1
+        const rookColumn = dir > 0 ? 7 : 0
 
-        if (dir > 0) {
-            const rook = this.getPieceAt(7, kingPos.y)
-            this.setPieceAt(7, kingPos.y, false)
-            rook.setCurrentPos(kingPos.x + dir, kingPos.y)
-            this.setPieceAt(kingPos.x + dir, kingPos.y, rook)
-        } else{
-            const rook = this.getPieceAt(0, kingPos.y)
-            this.setPieceAt(0, kingPos.y, false)
-            rook.setCurrentPos(kingPos.x + dir, kingPos.y)
-            this.setPieceAt(kingPos.x + dir, kingPos.y, rook)
-        }
+        const rook = this.getPieceAt(rookColumn, kingPrevPosY)
+        this.setPieceAt(rookColumn, kingPrevPosY, false)
+        rook.setCurrentPos(kingPrevPosX + dir, kingPrevPosY)
+        this.setPieceAt(kingPrevPosX + dir, kingPrevPosY, rook)
     }
 
     drawBoard() {
@@ -541,6 +600,7 @@ class ChessGame {
     }
 }
 
+
 const newGame = new ChessGame(initialBoard(), COLOR_PALETTE)
 loadImages(newGame)
 
@@ -562,9 +622,9 @@ function clickHandler(game, boardPosX, boardPosY) {
             const is_castling_move = available_move.type === 't'
             const is_currently_in_check = isCheck(game.board, CURRENT_PLAYER)
             const new_board = getBoard(game.board, [{ x: game.current_piece.x, y: game.current_piece.y}, available_move])
-            const self_check = isCheck(new_board, CURRENT_PLAYER)
+            const will_be_in_check = isCheck(new_board, CURRENT_PLAYER)
 
-            if (self_check) {
+            if (will_be_in_check) {
                 console.log('invalid move! (would put you in check)')
             } else if (is_castling_move && is_currently_in_check) {
                 console.log('invalid move! (cannot castle while in check)')
@@ -576,12 +636,20 @@ function clickHandler(game, boardPosX, boardPosY) {
 
                 if (is_castling_move) {
                     const prev_pos = game.last_move[0]
-                    game.castlingMove(prev_pos.x, prev_pos.y, boardPosX - prev_pos.x)
+                    game.castlingMove(prev_pos.x, prev_pos.y)
                 }
                 
+                const is_next_player_in_check = isCheck(game.board, nextColor(CURRENT_PLAYER))
                 if (TURN_NUMBER < 201) {
-                    game.addToMoveHistory()
+                    game.addToMoveHistory(captured=captured_piece, check=is_next_player_in_check, castling=is_castling_move)
                 }
+
+                const is_promotion_available = game.checkForPromotion()
+                if (is_promotion_available) {
+                    game.promote(is_promotion_available)
+                    return
+                }
+
                 game.nextPlayer()
             }
         }
@@ -589,18 +657,25 @@ function clickHandler(game, boardPosX, boardPosY) {
         game.setCurrentPiece(false)
         game.drawBoard()
 
-        const is_in_check = isCheck(game.board, CURRENT_PLAYER)
+        handleCheckAndMate(game, CURRENT_PLAYER)
+    }
+}
 
-        if (is_in_check) {
-            const check_pos = game.last_move[1]
-            const check_king = game.kings[CURRENT_PLAYER]
-            game.highlightCheck(check_pos.x, check_pos.y)
-            game.highlightCheck(check_king.x, check_king.y)
+function promotionClickHandler(game, boardPosX, boardPosY) {
+    for (const piece of game.promotion_pieces) {
+        if ((boardPosX === piece.x) && (boardPosY === piece.y)) {
+            const position = game.promotion_pieces[0]
+            piece.setCurrentPos(position.x, position.y)
+            game.setPieceAt(position.x, position.y, piece)
 
-            const is_mate = isMate(game.board, CURRENT_PLAYER)
-            if (is_mate) {
-                gameOver()
-            }
+            game.nextPlayer()
+            game.setCurrentPiece(false)
+            game.drawBoard()
+
+            handleCheckAndMate(game, CURRENT_PLAYER)
+
+            canvas.addEventListener('click', eventListener)
+            canvas.removeEventListener('click', promotionEventListener)
         }
     }
 }
@@ -615,6 +690,13 @@ function eventListener(e) {
     const boardPosY = Math.floor(e.offsetY / SQ_HEIGHT)
 
     clickHandler(newGame, boardPosX, boardPosY)
+}
+
+function promotionEventListener(e) {
+    const boardPosX = Math.floor(e.offsetX / SQ_WIDTH)
+    const boardPosY = Math.floor(e.offsetY / SQ_HEIGHT)
+
+    promotionClickHandler(newGame, boardPosX, boardPosY)
 }
 
 canvas.addEventListener('click', eventListener)

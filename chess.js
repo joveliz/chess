@@ -10,8 +10,6 @@ const HEIGHT = 600
 const SQ_WIDTH = WIDTH / 8
 const SQ_HEIGHT = HEIGHT / 8
 
-const EMPTY_BOARD = Array.from(Array(8), () => Array(8).fill(false))
-
 canvas.width = WIDTH
 canvas.height = HEIGHT
 
@@ -66,9 +64,9 @@ const IMG_FILES = {
 const IMAGES = {}
 
 
-function loadImages(game) {
-    count = 0
-    total = Object.keys(IMG_FILES).length
+function startGame(game) {
+    let count = 0
+    const total = Object.keys(IMG_FILES).length
     console.log(`Loading assets... ${Math.round(count)}%`)
     for (const key in IMG_FILES) {
         const img = new Image()
@@ -78,6 +76,7 @@ function loadImages(game) {
             console.log(`Loading assets... ${Math.round(100 * count / total)}%`)
             if (count == total) {
                 game.drawBoard()
+                canvas.addEventListener('click', eventListener)
             }
         }
         img.src = IMG_DIR + IMG_FILES[key]
@@ -609,10 +608,6 @@ class ChessGame {
     }
 }
 
-
-const newGame = new ChessGame(initialBoard(), COLOR_PALETTE)
-loadImages(newGame)
-
 function clickHandler(game, boardPosX, boardPosY) {
     if (!game.current_piece) {
         const piece = game.getPieceAt(boardPosX, boardPosY)
@@ -652,7 +647,6 @@ function clickHandler(game, boardPosX, boardPosY) {
 
                 if (captured_piece) {
                     game.addCapturedPiece(captured_piece)
-                    console.log(captured_piece)
                 }
 
                 if (is_castling_move) {
@@ -662,7 +656,7 @@ function clickHandler(game, boardPosX, boardPosY) {
                 
                 const is_next_player_in_check = isCheck(game.board, nextColor(CURRENT_PLAYER))
                 if (TURN_NUMBER < 201) {
-                    game.addToMoveHistory(captured=captured_piece, check=is_next_player_in_check, castling=is_castling_move)
+                    game.addToMoveHistory(captured_piece, is_next_player_in_check, is_castling_move)
                 }
 
                 const is_promotion_available = game.checkForPromotion()
@@ -704,6 +698,7 @@ function promotionClickHandler(game, boardPosX, boardPosY) {
 function gameOver() {
     console.log('game over.')
     canvas.removeEventListener('click', eventListener)
+    canvas.removeEventListener('click', promotionEventListener)
 }
 
 function eventListener(e) {
@@ -720,4 +715,5 @@ function promotionEventListener(e) {
     promotionClickHandler(newGame, boardPosX, boardPosY)
 }
 
-canvas.addEventListener('click', eventListener)
+const newGame = new ChessGame(initialBoard(), COLOR_PALETTE)
+startGame(newGame)

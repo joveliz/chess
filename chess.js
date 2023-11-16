@@ -20,6 +20,8 @@ var CURRENT_PLAYER = 'w'
 
 var TURN_NUMBER = 1
 
+var HALF_MOVES = 0
+
 const SQ_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 
 const SQ_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -408,6 +410,7 @@ class ChessGame {
         this.kings = {b: null, w: null}
         this.captured_pieces = {b: [], w: []}
         this.promotion_pieces = []
+        this.castling_rights = 'KQkq'
         this.init(board)
     }
 
@@ -465,6 +468,57 @@ class ChessGame {
 
     setCurrentPiece(piece) {
         this.current_piece = piece
+    }
+
+    nextPlayer() {
+        CURRENT_PLAYER = nextColor(CURRENT_PLAYER)
+    }
+
+    getFEN() {
+        let fen_string = ''
+        let row_count = 0
+
+        for (const row of this.board) {
+            let row_string = ''
+            let empty_count = 0
+            let square_count = 0
+            for (const square of row) {
+                square_count += 1
+                if (square == false) {
+                    empty_count += 1
+                    if ((square_count == 8) && (empty_count > 0)) {
+                        row_string = row_string + `${empty_count}`
+                    }
+                } else {
+                    if (empty_count > 0) {
+                        row_string = row_string + `${empty_count}`
+                        empty_count = 0
+                    }
+                    row_string = row_string + `${square.color == 'w' ? square.type.toUpperCase() : square.type}`
+                }
+            }
+            row_count += 1
+            fen_string = fen_string + row_string + `${row_count < 8 ? '/' : ' '}`
+        }
+
+        fen_string = fen_string + `${CURRENT_PLAYER} ` + this.castling_rights + ' - ' + `${HALF_MOVES} ` + `${TURN_NUMBER}`
+
+        return fen_string
+    }
+
+    updateCastlingRights(color) {
+        if (this.castling_rights.length < 2) {
+            return
+        }
+        if (this.castling_rights.length == 2) {
+            this.castling_rights = '-'
+        } else {
+            if (color == 'b') {
+                this.castling_rights = 'KQ'
+            } else {
+                this.castling_rights = 'kq'
+            }
+        }
     }
 
     makeMove(x, y, piece) {
@@ -543,11 +597,6 @@ class ChessGame {
         canvas.addEventListener('click', promotionEventListener)
     }
 
-
-    nextPlayer() {
-        CURRENT_PLAYER = nextColor(CURRENT_PLAYER)
-    }
-
     highlightSquare(x, y, color=this.color_palette.sq_highlight) {
         c.fillStyle = color
         c.fillRect(x * SQ_WIDTH, y * SQ_HEIGHT, SQ_WIDTH, SQ_HEIGHT)
@@ -580,9 +629,12 @@ class ChessGame {
         const rookColumn = dir > 0 ? 7 : 0
 
         const rook = this.getPieceAt(rookColumn, kingPrevPosY)
+        const color = rook.color
         this.setPieceAt(rookColumn, kingPrevPosY, false)
         rook.setCurrentPos(kingPrevPosX + dir, kingPrevPosY)
         this.setPieceAt(kingPrevPosX + dir, kingPrevPosY, rook)
+
+        this.updateCastlingRights(color)
     }
 
     drawBoard() {
@@ -665,7 +717,14 @@ function clickHandler(game, boardPosX, boardPosY) {
                     return
                 }
 
+                if ((captured_piece) || (game.current_piece.type == 'p')) {
+                    HALF_MOVES = 0
+                } else {
+                    HALF_MOVES += 1
+                }
+
                 game.nextPlayer()
+                console.log(game.getFEN())
             }
         }
 

@@ -634,4 +634,4 @@ class ChessGame {
     }
 }
 
-export {ChessPiece, ChessGame, SQ_WIDTH, SQ_HEIGHT, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves}
+export {ChessPiece, ChessGame, SQ_WIDTH, SQ_HEIGHT, SQ_LETTERS, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves}

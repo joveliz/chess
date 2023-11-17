@@ -10,5 +10,5 @@ TODO list:
 - <strike>Add textbox to the side to capture move history (in algebraic notation).</strike>
 - Add timer to side textbox.
 - Add pieces taken counter.
-- Add vs. AI mode.
+- <strike>Add vs. AI mode.</strike>
 - Add styling customization options.

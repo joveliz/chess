@@ -1,4 +1,6 @@
-import {ChessPiece, ChessGame, SQ_WIDTH, SQ_HEIGHT, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves} from './chess.js';
+import {ChessPiece, ChessGame, SQ_WIDTH, SQ_HEIGHT, SQ_LETTERS, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves} from './chess.js';
+
+var ai = true
 
 const COLOR_PALETTE = {
     sq_color: '#f1f5ed',
@@ -6,6 +8,60 @@ const COLOR_PALETTE = {
     sq_highlight_check: 'rgb(235, 58, 52)',
     sq_highlight_moves: 'rgba(252, 246, 50, 0.4)',
     sq_highlight_last_move: 'rgba(5, 113, 176, 0.8)'
+}
+
+function uciToMove(game, uci) {
+    if (uci == "None") {
+        return
+    }
+    const piece = uci.substring(0, 2)
+    const piece_letter = piece.substring(0,1)
+    let pieceX = 0
+    let pieceY = 0
+    const move = uci.substring(2,4)
+    const move_letter = move.substring(0,1)
+    let moveX = 0
+    let moveY = 0
+
+    for (let i=0; i<SQ_LETTERS.length; i++) {
+        if (SQ_LETTERS[i] == piece_letter) {
+            pieceX = i
+        }
+    }
+    moveY = 8 - parseInt(move.substring(1,2))
+
+    for (let i=0; i<SQ_LETTERS.length; i++) {
+        if (SQ_LETTERS[i] == move_letter) {
+            moveX = i
+        }
+    }
+    pieceY = 8 - parseInt(piece.substring(1,2))
+
+    clickHandler(game, pieceX, pieceY)
+    clickHandler(game, moveX, moveY)
+}
+
+function makeAIMove(game, fen) {
+    console.log('AI thinking move...')
+    const body = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fen: fen, model: 'model1.keras' }),
+      };
+    
+    fetch('http://localhost:5000/getmove', body)
+      .then(response => {
+        return response.json()
+      })
+      .then(aimove => {
+        console.log(aimove)
+        uciToMove(game, aimove['move'])
+      })
+      .catch((e) => {
+        console.log('there was an error with the API!')
+    })
 }
 
 function eventListener(e) {
@@ -44,7 +100,12 @@ function promote(game, piece) {
         new_option.draw()
     }
 
-    canvas.addEventListener('click', promotionEventListener)
+    if ((ai) && (CURRENT_PLAYER == 'b')) {
+        promotionClickHandler(game, x, y)
+
+    } else {
+        canvas.addEventListener('click', promotionEventListener)
+    }
 }
 
 function clickHandler(game, boardPosX, boardPosY) {
@@ -111,7 +172,6 @@ function clickHandler(game, boardPosX, boardPosY) {
                 }
 
                 game.nextPlayer()
-                console.log(game.getFEN())
             }
         }
 
@@ -119,6 +179,10 @@ function clickHandler(game, boardPosX, boardPosY) {
         game.drawBoard()
 
         handleCheckAndMate(game, CURRENT_PLAYER, gameOver)
+
+        if ((ai) && CURRENT_PLAYER == 'b') {
+            makeAIMove(game, game.getFEN()) 
+        }
     }
 }
 
@@ -132,7 +196,6 @@ function promotionClickHandler(game, boardPosX, boardPosY) {
             game.nextPlayer()
             game.setCurrentPiece(false)
             game.drawBoard()
-            console.log(game.getFEN())
 
             handleCheckAndMate(game, CURRENT_PLAYER, gameOver)
 
@@ -140,9 +203,14 @@ function promotionClickHandler(game, boardPosX, boardPosY) {
             canvas.removeEventListener('click', promotionEventListener)
         }
     }
+    
+    if ((ai) && CURRENT_PLAYER == 'b') {
+        makeAIMove(game, game.getFEN()) 
+    }
 }
 
 function gameOver() {
+    ai = false
     console.log('game over.')
     canvas.removeEventListener('click', eventListener)
     canvas.removeEventListener('click', promotionEventListener)

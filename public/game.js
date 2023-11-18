@@ -1,4 +1,4 @@
-import {ChessPiece, ChessGame, SQ_WIDTH, SQ_HEIGHT, SQ_LETTERS, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves} from './chess.js';
+import {ChessPiece, ChessGame, canvas, SQ_WIDTH, SQ_HEIGHT, SQ_LETTERS, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves} from './chess.js';
 
 var ai = true
 
@@ -7,8 +7,10 @@ const COLOR_PALETTE = {
     sq_highlight: 'rgb(252, 252, 3)',
     sq_highlight_check: 'rgb(235, 58, 52)',
     sq_highlight_moves: 'rgba(252, 246, 50, 0.4)',
-    sq_highlight_last_move: 'rgba(5, 113, 176, 0.8)'
+    sq_highlight_last_move: 'rgb(58, 215, 23)'
 }
+
+const aiText = document.getElementById('ai-text')
 
 function uciToMove(game, uci) {
     if (uci == "None") {
@@ -42,7 +44,8 @@ function uciToMove(game, uci) {
 }
 
 function makeAIMove(game, fen) {
-    console.log('AI thinking move...')
+    canvas.removeEventListener('click', eventListener)
+    aiText.innerText = ' (AI thinking...)'
     const body = {
         method: "POST",
         headers: {
@@ -56,11 +59,13 @@ function makeAIMove(game, fen) {
         return response.json()
       })
       .then(aimove => {
-        console.log(aimove)
         uciToMove(game, aimove['move'])
+        aiText.innerText = ''
+        canvas.addEventListener('click', eventListener)
       })
       .catch((e) => {
-        console.log('there was an error with the API!')
+        aiText.innerText = ' (AI error!)'
+        canvas.addEventListener('click', eventListener)
     })
 }
 
@@ -76,6 +81,13 @@ function promotionEventListener(e) {
     const boardPosY = Math.floor(e.offsetY / SQ_HEIGHT)
 
     promotionClickHandler(newGame, boardPosX, boardPosY)
+}
+
+function menuEventListener(e) {
+    const x = e.offsetX
+    const y = e.offsetY
+
+    menuClickHandler(newGame, x, y)
 }
 
 function promote(game, piece) {
@@ -177,6 +189,7 @@ function clickHandler(game, boardPosX, boardPosY) {
 
         game.setCurrentPiece(false)
         game.drawBoard()
+        game.highlightLastMove()
 
         handleCheckAndMate(game, CURRENT_PLAYER, gameOver)
 
@@ -196,6 +209,7 @@ function promotionClickHandler(game, boardPosX, boardPosY) {
             game.nextPlayer()
             game.setCurrentPiece(false)
             game.drawBoard()
+            game.highlightLastMove()
 
             handleCheckAndMate(game, CURRENT_PLAYER, gameOver)
 
@@ -209,6 +223,23 @@ function promotionClickHandler(game, boardPosX, boardPosY) {
     }
 }
 
+function menuClickHandler(game, x, y) {
+    if ((x >= 100) && (x <= canvas.width - 100)) {
+        if ((y >= 100) && (y <= 250)) {
+            ai = true
+            game.drawBoard()
+            canvas.addEventListener('click', eventListener)
+            canvas.removeEventListener('click', menuEventListener)
+        }
+        if ((y >= 350) && (y <= 500)) {
+            ai = false
+            game.drawBoard()
+            canvas.addEventListener('click', eventListener)
+            canvas.removeEventListener('click', menuEventListener)
+        }
+    }
+}
+
 function gameOver() {
     ai = false
     console.log('game over.')
@@ -216,7 +247,11 @@ function gameOver() {
     canvas.removeEventListener('click', promotionEventListener)
 }
 
+function runGame(game) {
+    canvas.addEventListener('click', menuEventListener)
+    startGame(game)
+}
+
 // initialize new board and start game
 const newGame = new ChessGame(initialBoard(), COLOR_PALETTE)
-startGame(newGame)
-canvas.addEventListener('click', eventListener)
+runGame(newGame)

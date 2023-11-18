@@ -11,4 +11,4 @@ TODO list:
 - Add timer to side textbox.
 - Add pieces taken counter.
 - <strike>Add vs. AI mode.</strike>
-- Add styling customization options.
+- <strike>Add styling customization options.</strike>

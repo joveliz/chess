@@ -5,14 +5,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css" />
-    <title>chess</title>
+    <title>knaight @joveliz</title>
 </head>
 <body>
+    <div class="div--title">
+        <img src="dodecahedron.svg" alt="dodecahedron logo">
+        <h1>kn·<span>ai</span>·ght</h1>
+    </div>
     <div class="div--container">
-        <canvas id="canvas"></canvas>
+        <div class="canvas--container">
+            <canvas id="canvas"></canvas>
+            <div class="canvas--background"></div>
+        </div>
         <div class="div--menu" id="div-menu">
             <div class="div--black">
                 <h3>BLACK</h3>
+                <h3 id="ai-text"></h3>
             </div>
             <div class="div--history" id="div-history">
             </div>
@@ -21,7 +29,10 @@
             </div>
         </div>
     </div>
-
+    <div class="div--credits">
+        <h4>jovelizoso@gmail.com ·</h4>
+        <h4>·· github.com/joveliz</h4>
+    </div>
     <script type="module" src="game.js"></script>
 </body>
 </html>

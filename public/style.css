@@ -1,0 +1,122 @@
+body {
+    margin: 0;
+    background-color: rgb(45, 45, 45);
+}
+
+.div--title {
+    margin: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.div--title h1 {
+    font-family: monospace;
+    font-size: 48px;
+    color: whitesmoke;
+    text-shadow: 3px 3px rgb(72, 72, 72);
+}
+
+.div--title h1 span {
+    color: rgb(247, 12, 204);
+}
+
+.div--title > img {
+    position: relative;
+    right: 20px;
+}
+
+.div--container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+.canvas--container {
+    position: relative;
+    width: 600px;
+    height: 600px;
+}
+
+#canvas {
+    position: relative;
+    z-index: 2;
+}
+
+.canvas--background {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: 1;
+    width: 600px;
+    height: 600px;
+    background: linear-gradient(327deg, #1ba9cd, rgb(206, 95, 206),rgb(211, 208, 67));
+    background-size: 600% 600%;
+    -webkit-animation: AnimationName 30s ease infinite;
+    -moz-animation: AnimationName 30s ease infinite;
+    animation: AnimationName 30s ease infinite;
+}
+
+@-webkit-keyframes AnimationName {
+    0%{background-position:14% 0%}
+    50%{background-position:87% 100%}
+    100%{background-position:14% 0%}
+}
+@-moz-keyframes AnimationName {
+    0%{background-position:14% 0%}
+    50%{background-position:87% 100%}
+    100%{background-position:14% 0%}
+}
+@keyframes AnimationName {
+    0%{background-position:14% 0%}
+    50%{background-position:87% 100%}
+    100%{background-position:14% 0%}
+}
+
+.div--menu {
+    display: grid;
+    grid-template-rows: 30px 1fr 30px;
+    grid-template-columns: 1fr;
+    background-color: rgb(25, 25, 25);
+    overflow: auto;
+}
+
+.div--black {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(16, 16, 16);
+    color:rgb(237, 237, 237);
+    font-family: 'Lucida Sans';
+    font-size: 10px;
+    text-align: center;
+}
+
+.div--white {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(237, 237, 237);
+    color:rgb(16, 16, 16);
+    font-family: 'Lucida Sans';
+    font-size: 10px;
+    text-align: center;
+}
+
+.div--history {
+    padding-left: 10px;
+    color:rgb(161, 161, 161);
+    font-family:'Courier New';
+    font-size: 14px;
+}
+
+.div--credits {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    color: rgb(132, 132, 132);
+}

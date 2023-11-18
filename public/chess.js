@@ -59,7 +59,20 @@ const IMG_FILES = {
     wk: 'wk.png',
 }
 
-function startGame(game) {
+function drawMenuScreen() {
+    c.clearRect(0, 0, WIDTH, HEIGHT)
+
+    c.fillStyle = 'white'
+    c.fillRect(100, 100, WIDTH - 200, 150)
+    c.fillRect(100, 350, WIDTH - 200, 150)
+
+    c.font = "48px arial"
+    c.fillStyle = 'rgb(45, 45, 45)'
+    c.fillText("vs. AI", 235, 190)
+    c.fillText("vs. Player", 190, 445)
+}
+
+function startGame() {
     let count = 0
     const total = Object.keys(IMG_FILES).length
     console.log(`Loading assets... ${Math.round(count)}%`)
@@ -70,7 +83,7 @@ function startGame(game) {
             count += 1
             console.log(`Loading assets... ${Math.round(100 * count / total)}%`)
             if (count == total) {
-                game.drawBoard()
+                drawMenuScreen()
             }
         }
         img.src = IMG_DIR + IMG_FILES[key]
@@ -425,7 +438,7 @@ class ChessGame {
 
     nextSqColor(color) {
         if (color == '#f1f5ed') {
-            return '#529942'
+            return 'black'
         }
         else {
             return '#f1f5ed'
@@ -433,6 +446,10 @@ class ChessGame {
     }
 
     drawSquare(x, y, color=this.color_palette.sq_color) {
+        if (color == 'black') {
+            c.clearRect((x * SQ_WIDTH), (y * SQ_HEIGHT), SQ_WIDTH, SQ_HEIGHT)
+            return
+        }
         c.fillStyle = color
         c.fillRect((x * SQ_WIDTH), (y * SQ_HEIGHT), SQ_WIDTH, SQ_HEIGHT)
     }
@@ -634,4 +651,4 @@ class ChessGame {
     }
 }
 
-export {ChessPiece, ChessGame, SQ_WIDTH, SQ_HEIGHT, SQ_LETTERS, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves}
+export {ChessPiece, ChessGame, canvas, SQ_WIDTH, SQ_HEIGHT, SQ_LETTERS, CURRENT_PLAYER, TURN_NUMBER, startGame, initialBoard, isCheck, getBoard, handleCheckAndMate, nextColor, setHalfMoves}

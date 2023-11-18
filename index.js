@@ -10,7 +10,7 @@ app.get('/', (req, res) => {
     let curr_date = new Date(Date.now()).toISOString()
     let statusText = 'successfully served' 
     try {
-        res.status(200).sendFile(path.join(__dirname, 'index.html'))
+        res.status(200).sendFile(path.join(__dirname, 'public/index.html'))
     } catch {
         res.status(500).json({ error: 'unexpected error!!'})
         successString = 'failed to serve!'

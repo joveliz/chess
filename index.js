@@ -6,18 +6,6 @@ const PORT = 8000
 
 app.use(express.static(path.join(__dirname, 'public')))
 
-app.get('/', (req, res) => {
-    let curr_date = new Date(Date.now()).toISOString()
-    let statusText = 'successfully served' 
-    try {
-        res.status(200).sendFile(path.join(__dirname, 'public/index.html'))
-    } catch {
-        res.status(500).json({ error: 'unexpected error!!'})
-        successString = 'failed to serve!'
-    }
-    console.log(`${curr_date} GET '/' request ${statusText} to: ${req.socket.remoteAddress}`)
-})
-
 app.get('*', (req, res) => {
     let curr_date = new Date(Date.now()).toISOString()
 

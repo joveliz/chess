@@ -33,6 +33,14 @@ body {
     margin-top: 30px;
     margin-left: 50px;
     margin-right: 50px;
+    min-width: 600px;
+}
+
+@media (max-width: 900px) {
+    .div--container {
+        margin-left: 0px;
+        margin-right: 0px;
+    }
 }
 
 .canvas--container {
@@ -82,6 +90,12 @@ body {
     grid-template-columns: 1fr;
     background-color: rgb(25, 25, 25);
     overflow: auto;
+}
+
+@media (max-width: 768px) {
+    .div--menu {
+        display: none;
+    }
 }
 
 .div--black {

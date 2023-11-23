@@ -51,10 +51,10 @@ function makeAIMove(game, fen) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ fen: fen, model: 'model1.keras' }),
+        body: JSON.stringify({ fen: fen }),
       };
     
-    fetch('http://localhost:5000/getmove', body)
+    fetch('https://joveliz.pythonanywhere.com/getmove', body)
       .then(response => {
         return response.json()
       })

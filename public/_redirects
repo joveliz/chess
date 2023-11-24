@@ -1,1 +1,1 @@
-/api/* http://192.168.1.23:8010/getmove:splat 200
+/api/* http://192.168.1.23:8010/:splat 200

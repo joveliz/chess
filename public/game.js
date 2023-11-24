@@ -54,7 +54,7 @@ function makeAIMove(game, fen) {
         body: JSON.stringify({ fen: fen }),
       };
     
-    fetch('http://192.168.1.23:8010/getmove', body)
+    fetch('/api/getmove', body)
       .then(response => {
         return response.json()
       })
